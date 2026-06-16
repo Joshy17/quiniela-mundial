@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiniela Mundial 🏆</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">⚽ Quiniela <span>Mundial</span></div>
+    <nav>
+      <button class="active" onclick="showPage('leaderboard', this)">Tabla</button>
+      <button onclick="showPage('partidos', this)">Partidos</button>
+      <button onclick="showPage('estado', this)">Estado API</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- LEADERBOARD -->
+  <div id="page-leaderboard" class="page active">
+    <div class="lb-header">
+      <h1>🏆 Tabla General</h1>
+      <p id="lb-subtitle">Calculando puntos...</p>
+    </div>
+    <div class="lb-grid" id="leaderboard-grid"></div>
+  </div>
+
+  <!-- PARTIDOS -->
+  <div id="page-partidos" class="page">
+    <div class="matches-controls" id="group-filters"></div>
+    <div id="matches-list"></div>
+  </div>
+
+  <!-- ESTADO API -->
+  <div id="page-estado" class="page">
+    <div class="result-form">
+      <h2>Estado de actualización</h2>
+      <p id="api-status" class="api-status">Consultando resultados...</p>
+      <button class="btn-primary" onclick="syncResults(true)">Actualizar ahora</button>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="./js/data.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>
