@@ -100,11 +100,11 @@ export default async function handler(req, res) {
         const homeName = normalizeTeamName(home.team?.displayName);
         const awayName = normalizeTeamName(away.team?.displayName);
 
-        const homeScore = Number(home.score ?? 0);
-        const awayScore = Number(away.score ?? 0);
-
         const isFinished = status.completed === true;
         const isLive = status.state === 'in';
+
+        const homeScore = (isFinished || isLive) ? Number(home.score ?? 0) : null;
+        const awayScore = (isFinished || isLive) ? Number(away.score ?? 0) : null;
 
         matches.push({
           apiId: event.id,
