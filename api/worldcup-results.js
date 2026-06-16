@@ -1,65 +1,97 @@
 // Vercel Serverless Function
-// Consulta API-Football sin exponer la API key en el navegador.
+// Consulta WorldCup26 API gratis, sin API key.
 
 export default async function handler(req, res) {
-  const API_KEY = process.env.APIFOOTBALL_KEY;
-
-  if (!API_KEY) {
-    return res.status(500).json({
-      ok: false,
-      error: 'Falta configurar APIFOOTBALL_KEY en las variables de entorno de Vercel.'
-    });
-  }
-
   try {
-    const url = 'https://v3.football.api-sports.io/fixtures?league=1&season=2026';
+    const url = 'https://worldcup26.ir/get/games';
 
-    const response = await fetch(url, {
-      headers: {
-        'x-apisports-key': API_KEY
-      }
-    });
+    const response = await fetch(url);
 
     if (!response.ok) {
       const text = await response.text();
       return res.status(response.status).json({
         ok: false,
-        error: 'Error consultando API-Football',
+        error: 'Error consultando WorldCup26 API',
         details: text
       });
     }
 
     const data = await response.json();
 
-    const matches = (data.response || []).map(item => {
-      const statusShort = item.fixture?.status?.short || 'NS';
-      const statusLong = item.fixture?.status?.long || 'Not Started';
-      const finishedStatuses = ['FT', 'AET', 'PEN'];
-      const liveStatuses = ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'SUSP', 'INT'];
+    const rawGames = Array.isArray(data) ? data : data.data || data.response || data.games || [];
+
+    const matches = rawGames.map(game => {
+      const home =
+        game.home_team_en ||
+        game.home_team ||
+        game.team1 ||
+        game.home ||
+        game.homeTeam ||
+        game.team_home ||
+        null;
+
+      const away =
+        game.away_team_en ||
+        game.away_team ||
+        game.team2 ||
+        game.away ||
+        game.awayTeam ||
+        game.team_away ||
+        null;
+
+      const homeScore =
+        game.home_score ??
+        game.score1 ??
+        game.homeScore ??
+        game.goals_home ??
+        game.home_goals ??
+        null;
+
+      const awayScore =
+        game.away_score ??
+        game.score2 ??
+        game.awayScore ??
+        game.goals_away ??
+        game.away_goals ??
+        null;
+
+      const status =
+        game.status ||
+        game.match_status ||
+        game.state ||
+        '';
+
+      const isFinished =
+        String(status).toLowerCase().includes('finish') ||
+        String(status).toLowerCase().includes('complete') ||
+        String(status).toLowerCase() === 'ft' ||
+        (homeScore !== null && awayScore !== null);
+
+      const isLive =
+        String(status).toLowerCase().includes('live') ||
+        String(status).toLowerCase().includes('playing');
 
       return {
-        apiId: item.fixture?.id,
-        date: item.fixture?.date,
-        venue: item.fixture?.venue?.name || null,
-        city: item.fixture?.venue?.city || null,
-        home: item.teams?.home?.name,
-        away: item.teams?.away?.name,
-        homeScore: item.goals?.home,
-        awayScore: item.goals?.away,
-        statusShort,
-        statusLong,
-        isFinished: finishedStatuses.includes(statusShort),
-        isLive: liveStatuses.includes(statusShort)
+        apiId: game.id || game._id || game.match_id || null,
+        date: game.date || game.match_date || game.datetime || null,
+        venue: game.stadium || game.venue || null,
+        city: game.city || null,
+        home,
+        away,
+        homeScore,
+        awayScore,
+        statusShort: status || (isFinished ? 'FT' : 'NS'),
+        statusLong: status || (isFinished ? 'Finished' : 'Not Started'),
+        isFinished,
+        isLive
       };
-    });
+    }).filter(m => m.home && m.away);
 
-    // Cache en Vercel/CDN: evita gastar requests por cada usuario.
-    // Durante partidos en vivo puedes bajar s-maxage a 30 si necesitas más rapidez.
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
 
     return res.status(200).json({
       ok: true,
-      source: 'api-football',
+      source: 'worldcup26.ir',
       updatedAt: new Date().toISOString(),
       count: matches.length,
       matches
