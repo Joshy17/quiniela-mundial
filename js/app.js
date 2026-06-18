@@ -82,8 +82,8 @@ function normalizeName(value) {
 }
 
 function aliasesFor(teamName) {
-  const aliases = TEAM_ALIASES[teamName] || [teamName];
-  return aliases.map(normalizeName);
+  const aliases = TEAM_ALIASES[teamName] || [];
+  return [teamName, ...aliases].map(normalizeName);
 }
 
 function sameTeam(localTeam, apiTeam) {
